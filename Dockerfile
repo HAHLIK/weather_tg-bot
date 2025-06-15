@@ -11,6 +11,6 @@ RUN go build -o ./bin/app cmd/app/main.go
 
 FROM alpine
 
-COPY --from=builder /usr/local/src/bin/app /
+COPY --from=builder /usr/local/src/bin/app /usr/local/src/.env /
 
 CMD [ "/app" ]
