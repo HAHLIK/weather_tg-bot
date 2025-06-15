@@ -11,3 +11,7 @@ func ErrorWrap(message string, errMessage any) error {
 
 	return err
 }
+
+func CelsiumFromKelvin(temp float64) float64 {
+	return (temp - 273.15)
+}

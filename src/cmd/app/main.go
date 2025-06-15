@@ -6,8 +6,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/go-telegram/bot"
-	"github.com/go-telegram/bot/models"
+	openweather "github.com/HAHLIK/weather_tg-bot/internal/app/clients/openweatherapi"
+	eventConsumer "github.com/HAHLIK/weather_tg-bot/internal/consumer/event-consumer"
+	telegramEvents "github.com/HAHLIK/weather_tg-bot/internal/events/telegram"
 	"github.com/joho/godotenv"
 )
 
@@ -17,38 +18,17 @@ func main() {
 		log.Fatal("can't load .env file", err)
 	}
 	tgBotToken := os.Getenv("TG_BOT_TOKEN")
+	owApiKey := os.Getenv("OPENWEATHER_API_KEY")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	opts := []bot.Option{
-		bot.WithDefaultHandler(handler),
-	}
+	processor := telegramEvents.New(openweather.New(owApiKey))
+	eventConsumer := eventConsumer.New(processor, processor)
 
-	tgBot, err := bot.New(tgBotToken, opts...)
+	log.Print("Telegram bot is starting")
+	err = eventConsumer.Start(ctx, tgBotToken)
 	if err != nil {
-		panic(err)
-	}
-
-	tgBot.Start(ctx)
-}
-
-func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
-	switch update.Message.Text {
-
-	case "/start":
-		{
-			b.SendMessage(ctx, &bot.SendMessageParams{
-				ChatID: update.Message.Chat.ID,
-				Text:   "Hello!",
-			})
-			break
-		}
-
-	default:
-		b.SendMessage(ctx, &bot.SendMessageParams{
-			ChatID: update.Message.Chat.ID,
-			Text:   "Добавлю потом прогноз погоды",
-		})
+		log.Fatal(err)
 	}
 }
